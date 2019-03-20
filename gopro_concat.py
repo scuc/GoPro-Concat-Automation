@@ -61,27 +61,27 @@ def print_intro():
 
     return [source_path, output_path, down_convert]
 
-def set_logger():
-    """Setup logging configuration
-    """
-    logger = logging.getLogger("gopro_concat")
-    logger.setLevel(logging.DEBUG)
-    handler = TimedRotatingFileHandler(filename='gopro_jobs', encoding="utf8")
-    handler.suffix = '_' + '%Y%m%d%H%M'+'.log'
-    formatter = logging.Formatter("%(asctime)s | %(levelname)s | Function: %(funcName)s() | Line %(lineno)s | %(message)s")
+# def set_logger():
+#     """Setup logging configuration
+#     """
+#     logger = logging.getLogger("gopro_concat")
+#     logger.setLevel(logging.DEBUG)
+#     handler = TimedRotatingFileHandler(filename='gopro_jobs', encoding="utf8")
+#     handler.suffix = '_' + '%Y%m%d%H%M'+'.log'
+#     formatter = logging.Formatter("%(asctime)s | %(levelname)s | Function: %(funcName)s() | Line %(lineno)s | %(message)s")
 
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+#     handler.setFormatter(formatter)
+#     logger.addHandler(handler)
 
-    return logger
+#     return logger
 
 
-log = logging.getLogger(__name__)
-out_hdlr = logging.StreamHandler(sys.stdout)
-out_hdlr.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-out_hdlr.setLevel(logging.INFO)
-log.addHandler(out_hdlr)
-log.setLevel(logging.DEBUG)
+# log = logging.getLogger(__name__)
+# out_hdlr = logging.StreamHandler(sys.stdout)
+# out_hdlr.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+# out_hdlr.setLevel(logging.INFO)
+# log.addHandler(out_hdlr)
+# log.setLevel(logging.DEBUG)
 
 def get_gopro_list(source_path):
 
@@ -96,7 +96,7 @@ def get_gopro_list(source_path):
     # print("FILE LIST: " + str(file_list))
 
     for gopro_file in file_list:
-        if gopro_file.endswith('.MP4'):
+        if gopro_file.endswith('.mp4'):
             gopr_source_list.append(gopro_file)
         else:
             continue
@@ -137,7 +137,7 @@ def get_mediainfo(source_path, gprkey):
         if track.track_type == 'Video':
             bitrate = track.bit_rate
             bitratemode = track.bit_rate_mode
-            codec = track.codec
+            codec = track.codec_ID
             framerate = track.frame_rate
             encoded_date = track.encoded_date
             width = track.width
@@ -191,19 +191,24 @@ def create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey):
     file '/path/to/file3'
     '''
     gpr_txt_path = Path(output_path + gprkey[:-4] + '.txt')
-    gpr_sources_txt = open(gpr_txt_path, 'a')
 
-    # print("GPR TXT PATH: " + str(gpr_txt_path))
+    if gpr_txt_path.exists() is True:
+        pass
+        print("PASS on TXT FILE")
+    else:
+        gpr_sources_txt = open(gpr_txt_path, 'a')
 
-    gprfile_list = gopr_dict[gprkey]
+        # print("GPR TXT PATH: " + str(gpr_txt_path))
 
-    for file in gprfile_list:
-        file_stmnt = "file " + '\'' + source_path + file + '\'' + "\n"
-        gpr_sources_txt.write(file_stmnt)
+        gprfile_list = gopr_dict[gprkey]
 
-        # print("FILE STMNT: " + file_stmnt)
+        for file in gprfile_list:
+            file_stmnt = "file " + '\'' + source_path + file + '\'' + "\n"
+            gpr_sources_txt.write(file_stmnt)
 
-    gpr_sources_txt.close()
+            # print("FILE STMNT: " + file_stmnt)
+
+        gpr_sources_txt.close()
 
     return gpr_txt_path
 
@@ -244,10 +249,16 @@ def ffmpeg_concat(gopr_dict, source_path, output_path):
 
         # print("FFMPEG CMD: " + str(ffmpeg_cmd))
 
-        sp = subprocess.Popen(ffmpeg_cmd,shell=True, stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE)
+        output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
-        stdout, stderr = sp.communicate()
+        sp = subprocess.Popen(ffmpeg_cmd,
+                              shell=False,
+                              stderr=output_log,
+                              stdout=output_log)
+
+        stdout, stderr = sp.communicate(input='N')
+
+        output_log.close()
 
     return mp4_output, mediainfo, creation_time
 
@@ -259,8 +270,6 @@ def ffmpeg_downconvert(gopr_dict, source_path, output_path):
     gprkey_list = list(gopr_dict.keys())
 
     for gprkey in gprkey_list:
-
-        output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
         mp4_output, mediainfo, creation_time = ffmpeg_concat(gopr_dict, source_path, output_path)
 
@@ -274,33 +283,36 @@ def ffmpeg_downconvert(gopr_dict, source_path, output_path):
 
         video_siz = str(width) + 'x' + str(height)
 
-        ffmpeg_cmd = ['ffmpeg', '-i', mp4_output, '-map', '0:0',
-                      '-map', '0:1', '-c:a', 'aac', '-ab', '127k',
-                      '-strict', '-2', '-async', '1', '-c:v', 'libx264',
-                      '-b:v', '1000k', '-maxrate', '2000k', '-bufsize',
-                      '2000k', '-r', framerate, '-s', video_siz, '-aspect',
-                      '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
-                      '-level', '41', '-partitions',
-                      'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
-                      '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
-                      '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
-                      '1', '-me_method', 'hex', '-flags', '+loop',
-                      '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
-                      '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
-                      '51', '-threads', '8', '-metadata', creation_time,
-                      '-sn', '-y', mp4_output
-                      ]
+        mp4_source = mp4_output
+        mp4_output = output_path + mp4_source + "_downconvert.mp4"
 
-        sp = subprocess.Popen(ffmpeg_cmd, shell=True,
-                              stderr=subprocess.PIPE,
-                              stdout=subprocess.PIPE)
+        print("MP4 SOURCE:" + str(mp4_source))
+        print("MP4 OUTPUT:" + str(mp4_output))
 
-        stderr, stdout = sp.communicate()
+        output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
-        # for line in sp.stdout.readlines():
-        #     output_log.write(line)
+        ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
+              '-map', '0:1', '-c:a', 'aac', '-ab', '128k',
+              '-strict', '-2', '-async', '1', '-c:v', 'libx264',
+              '-b:v', '10000k', '-maxrate', '10000k', '-bufsize',
+              '10000k', '-r', framerate, '-s', video_siz, '-aspect',
+              '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+              '-level', '41', '-partitions',
+              'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
+              '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
+              '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
+              '1', '-me_method', 'hex', '-flags', '+loop',
+              '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
+              '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
+              '51', '-metadata', creation_time, '-sn', '-y', mp4_output]
 
-        # for line in sp.stderr.readlines():
-        #     output_log.write(line)
+        sp = subprocess.Popen(ffmpeg_cmd, shell=False,
+                          stderr=output_log, stdout=output_log)
 
-    output_log.close()
+        (stderr, stdout) = sp.communicate(input='N')
+
+        print(stderr, stdout)
+
+        output_log.close()
+
+        print("COMPLETE")
