@@ -2,11 +2,11 @@
 #!/usr/bin/env python3
 
 '''
-GoPro records MP4 files that are segmented based on a 4Gb file size limit.
-This script is used to go through a large batch of segmented GoPro files and
-merge them based on their filenumber and creation dates.
+GoPro-Concat-Automation  v 0.1
+March 2019
+created by: steven cucolo stevenc.github@gmail.com
 
-Steps:
+Concat Steps:
     Make a list of all the files in a GoPro a directory.
     Loop through the list and group files based on name and creation.
     Get the mediainfo for these files.
@@ -30,7 +30,10 @@ from time import localtime, strftime
 
 
 def print_intro():
-
+    '''
+    Get the user input for starting values (Source, Output, Downcovert)
+    and begin the concat process.
+    '''
     open_msg = f"\n\
     ================================================================\n \
                 GoPro Automation Script, version 1.0 \n \
@@ -84,7 +87,11 @@ def print_intro():
 # log.setLevel(logging.DEBUG)
 
 def get_gopro_list(source_path):
-
+    '''
+    Create a list of all the MP4 files in the given Source Dir.
+    File names must follow the specific pattern defined in the
+    regex statement.
+    '''
     os.chdir(source_path)
 
     gopr_source_list = []
@@ -96,7 +103,7 @@ def get_gopro_list(source_path):
     # print("FILE LIST: " + str(file_list))
 
     for gopro_file in file_list:
-        if gopro_file.endswith('.mp4'):
+        if gopro_file.endswith('.MP4'):
             gopr_source_list.append(gopro_file)
         else:
             continue
@@ -128,6 +135,10 @@ def get_gopro_list(source_path):
     return gopr_dict
 
 def get_mediainfo(source_path, gprkey):
+    '''
+    Use pymediainfo lib to extract the MP4 file info.
+    Pass these values back to the concat and downcovert.
+    '''
 
     gprkey_path = source_path + str(gprkey)
 
@@ -165,6 +176,10 @@ def get_mediainfo(source_path, gprkey):
 
 
 def create_datetime(encoded_date):
+    '''
+    Create datetime string values based on the encoded_time value
+    contained in the mediainfo for a MP4 file.
+    '''
 
     year = int(encoded_date[4:8])
     month = int(encoded_date[9:11])
@@ -185,7 +200,8 @@ def create_datetime(encoded_date):
 def create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey):
 
     '''
-    create a txt file with paths to sources
+    create a txt file with paths to a set our MP4 source files.
+    the text file is passed into the FFMEG statment as the input.
     file '/path/to/file1'
     file '/path/to/file2'
     file '/path/to/file3'
@@ -214,7 +230,9 @@ def create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey):
 
 
 def ffmpeg_concat(gopr_dict, source_path, output_path):
-
+    '''
+    Use FFMPEG subprocess call to merge a set of MP4 files.
+    '''
     os.chdir(output_path)
 
     gprkey_list = list(gopr_dict.keys())
@@ -222,8 +240,6 @@ def ffmpeg_concat(gopr_dict, source_path, output_path):
     for gprkey in gprkey_list:
 
         gpr_txt_path = create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey)
-
-#         print("GP SOURCES TXT: " + str(gpr_sources_txt))
 
         mediainfo = get_mediainfo(source_path, gprkey)
 
@@ -234,20 +250,13 @@ def ffmpeg_concat(gopr_dict, source_path, output_path):
 
         print("CREATION TIME: " + creation_time)
 
-        # print("GPRKEY: " + str(gprkey))
-        # print("GPRKEY_DATE: " + str(gprkey_date))
-
-        mp4_output = str(gprkey[:-4]) + '_' + gprkey_date[:-6] + '.mp4'
-
-        # print(str(mp4_output))
+        mp4_output = str(gprkey[:-4]) + '_' + gprkey_date[:-6] + '.MP4'
 
         ffmpeg_cmd = [
                       'ffmpeg', '-safe', '0', '-f', 'concat',  '-i',
                       gpr_txt_path, '-c', 'copy', '-metadata', creation_time,
                       mp4_output
                       ]
-
-        # print("FFMPEG CMD: " + str(ffmpeg_cmd))
 
         output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
@@ -264,7 +273,9 @@ def ffmpeg_concat(gopr_dict, source_path, output_path):
 
 
 def ffmpeg_downconvert(gopr_dict, source_path, output_path):
-
+    '''
+    Use a FFMPEG subprocess call to downconvert a merged MP4 file.
+    '''
     os.chdir(output_path)
 
     gprkey_list = list(gopr_dict.keys())

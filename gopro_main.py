@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 
+'''
+GoPro-Concat-Automation  v 0.1
+March 2019
+created by: steven cucolo stevenc.github@gmail.com
+
+GoPro records MP4 files that are segmented based on a 4Gb file size limit.
+This script will go through a large batch of segmented GoPro files and
+merge them based on their GoPro file number and creation dates.
+An option to downconvert the merged file is also provided. The file merge
+and downconvert is performed by FFMPEG.
+'''
 
 import gopro_concat as gp
 
 
-# set the global varibales for the script.
-
 def gopro_main():
-
+    '''
+    Get the user input and pass it into the concat and/or downconvert
+    functions.
+    '''
     gp_vars = gp.print_intro()
 
     source_path = gp_vars[0]
