@@ -15,6 +15,7 @@ Concat Steps:
     downconvert.
 '''
 
+import inspect
 import logging
 import os
 import re
@@ -63,28 +64,6 @@ def print_intro():
             continue
 
     return [source_path, output_path, down_convert]
-
-# def set_logger():
-#     """Setup logging configuration
-#     """
-#     logger = logging.getLogger("gopro_concat")
-#     logger.setLevel(logging.DEBUG)
-#     handler = TimedRotatingFileHandler(filename='gopro_jobs', encoding="utf8")
-#     handler.suffix = '_' + '%Y%m%d%H%M'+'.log'
-#     formatter = logging.Formatter("%(asctime)s | %(levelname)s | Function: %(funcName)s() | Line %(lineno)s | %(message)s")
-
-#     handler.setFormatter(formatter)
-#     logger.addHandler(handler)
-
-#     return logger
-
-
-# log = logging.getLogger(__name__)
-# out_hdlr = logging.StreamHandler(sys.stdout)
-# out_hdlr.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-# out_hdlr.setLevel(logging.INFO)
-# log.addHandler(out_hdlr)
-# log.setLevel(logging.DEBUG)
 
 def get_gopro_list(source_path):
     '''
@@ -197,7 +176,7 @@ def create_datetime(encoded_date):
     return creation_date_str
 
 
-def create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey):
+def create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path, output_path):
 
     '''
     create a txt file with paths to a set our MP4 source files.
@@ -229,101 +208,94 @@ def create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey):
     return gpr_txt_path
 
 
-def ffmpeg_concat(gopr_dict, source_path, output_path):
+def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
     '''
     Use FFMPEG subprocess call to merge a set of MP4 files.
     '''
     os.chdir(output_path)
 
-    gprkey_list = list(gopr_dict.keys())
+    gpr_txt_path = create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path,
+        output_path)
 
-    for gprkey in gprkey_list:
+    mediainfo = get_mediainfo(source_path, gprkey)
 
-        gpr_txt_path = create_ffmpeg_txtfiles(gopr_dict, source_path, output_path, gprkey)
+    encoded_date = mediainfo[4]
 
-        mediainfo = get_mediainfo(source_path, gprkey)
+    gprkey_date = create_datetime(encoded_date)
+    creation_time = 'creation_time=' + encoded_date[4:]
 
-        encoded_date = mediainfo[4]
+    print("CREATION TIME: " + creation_time)
 
-        gprkey_date = create_datetime(encoded_date)
-        creation_time = 'creation_time=' + encoded_date[4:]
+    mp4_output = str(gprkey[:-4]) + '_' + gprkey_date[:-6] + '.MP4'
 
-        print("CREATION TIME: " + creation_time)
+    ffmpeg_cmd = [
+                  'ffmpeg', '-safe', '0', '-f', 'concat',  '-i',
+                  gpr_txt_path, '-c', 'copy', '-metadata', creation_time,
+                  mp4_output
+                  ]
 
-        mp4_output = str(gprkey[:-4]) + '_' + gprkey_date[:-6] + '.MP4'
+    output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
-        ffmpeg_cmd = [
-                      'ffmpeg', '-safe', '0', '-f', 'concat',  '-i',
-                      gpr_txt_path, '-c', 'copy', '-metadata', creation_time,
-                      mp4_output
-                      ]
+    sp = subprocess.Popen(ffmpeg_cmd,
+                          shell=False,
+                          stderr=output_log,
+                          stdout=output_log)
 
-        output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
+    stdout, stderr = sp.communicate(input='N')
 
-        sp = subprocess.Popen(ffmpeg_cmd,
-                              shell=False,
-                              stderr=output_log,
-                              stdout=output_log)
-
-        stdout, stderr = sp.communicate(input='N')
-
-        output_log.close()
+    output_log.close()
 
     return mp4_output, mediainfo, creation_time
 
 
-def ffmpeg_downconvert(gopr_dict, source_path, output_path):
+def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path):
     '''
     Use a FFMPEG subprocess call to downconvert a merged MP4 file.
     '''
     os.chdir(output_path)
 
-    gprkey_list = list(gopr_dict.keys())
+    mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path)
 
-    for gprkey in gprkey_list:
+    bitrate = mediainfo[0]
+    bitratemode = mediainfo[1]
+    codec = mediainfo[2]
+    framerate = mediainfo[3]
+    encoded_date = mediainfo[4]
+    width = mediainfo[5]
+    height = mediainfo[6]
 
-        mp4_output, mediainfo, creation_time = ffmpeg_concat(gopr_dict, source_path, output_path)
+    video_siz = str(width) + 'x' + str(height)
 
-        bitrate = mediainfo[0]
-        bitratemode = mediainfo[1]
-        codec = mediainfo[2]
-        framerate = mediainfo[3]
-        encoded_date = mediainfo[4]
-        width = mediainfo[5]
-        height = mediainfo[6]
+    mp4_source = mp4_output
+    mp4_output = output_path + mp4_source[:-4] + "_downconvert.mp4"
 
-        video_siz = str(width) + 'x' + str(height)
+    print("MP4 SOURCE:" + str(mp4_source))
+    print("MP4 OUTPUT:" + str(mp4_output))
 
-        mp4_source = mp4_output
-        mp4_output = output_path + mp4_source + "_downconvert.mp4"
+    output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
-        print("MP4 SOURCE:" + str(mp4_source))
-        print("MP4 OUTPUT:" + str(mp4_output))
+    ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
+          '-map', '0:1', '-c:a', 'aac', '-ab', '128k',
+          '-strict', '-2', '-async', '1', '-c:v', 'libx264',
+          '-b:v', '10000k', '-maxrate', '10000k', '-bufsize',
+          '10000k', '-r', framerate, '-s', video_siz, '-aspect',
+          '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+          '-level', '41', '-partitions',
+          'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
+          '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
+          '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
+          '1', '-me_method', 'hex', '-flags', '+loop',
+          '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
+          '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
+          '51', '-metadata', creation_time, '-sn', '-y', mp4_output]
 
-        output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
+    sp = subprocess.Popen(ffmpeg_cmd, shell=False,
+                      stderr=output_log, stdout=output_log)
 
-        ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
-              '-map', '0:1', '-c:a', 'aac', '-ab', '128k',
-              '-strict', '-2', '-async', '1', '-c:v', 'libx264',
-              '-b:v', '10000k', '-maxrate', '10000k', '-bufsize',
-              '10000k', '-r', framerate, '-s', video_siz, '-aspect',
-              '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
-              '-level', '41', '-partitions',
-              'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
-              '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
-              '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
-              '1', '-me_method', 'hex', '-flags', '+loop',
-              '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
-              '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
-              '51', '-metadata', creation_time, '-sn', '-y', mp4_output]
+    (stderr, stdout) = sp.communicate(input='N')
 
-        sp = subprocess.Popen(ffmpeg_cmd, shell=False,
-                          stderr=output_log, stdout=output_log)
+    print(stderr, stdout)
 
-        (stderr, stdout) = sp.communicate(input='N')
+    output_log.close()
 
-        print(stderr, stdout)
-
-        output_log.close()
-
-        print("COMPLETE")
+    print("COMPLETE")

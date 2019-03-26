@@ -37,13 +37,18 @@ def gopro_main():
     print(start_message)
 
     gopro_dict = gp.get_gopro_list(source_path)
+    gprkey_list = list(gopro_dict.keys())
 
     if down_convert == False:
-        gp.ffmpeg_concat(gopro_dict, source_path, output_path)
-        print('Processing concat now...')
+
+        for gprkey in gprkey_list:
+            gp.ffmpeg_concat(gopro_dict, source_path, output_path)
+            print('Processing concat now...')
 
     else:
-        ffmpeg_downconvert = gp.ffmpeg_downconvert(gopro_dict, source_path, output_path)
+
+        for gprkey in gprkey_list:
+            ffmpeg_downconvert = gp.ffmpeg_downconvert(gprkey, gopro_dict, source_path, output_path)
 
         print( "Processing downconvert now...")
 
