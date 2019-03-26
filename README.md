@@ -1,5 +1,5 @@
 
-# GOPRO Concat with FFMPEG
+# GoPro Concat with Python and FFMPEG
 
 A Python script to stitch together large batches of
 segmented GoPro files. 
@@ -56,10 +56,10 @@ After the prerequisites are installed.
 
 ## Steps in the Script
 
-1.     Make a list of all the GoPro .MP4 files in a given source directory.
-2.     Loop through the list and group files into dictionaries based on name and creation.
-3.     Get the mediainfo for these files.
-4.     Create a .txt file(s) with the full paths of files. 
-5.     Pass the .txt file to FFMPEG which concats the grouped MP4 into one .MP4. 
-6.     (Optional) Downconvert the merged file to a lower bitrate. 
+1.   Make a list of all the GoPro .MP4 files in a given source directory.
+1.   Loop through the list and group files into dictionaries based on name and creation.
+1.   Get the mediainfo for these files.
+1.   Create a .txt file(s) with the full paths of files. 
+1.   Pass the .txt file to FFMPEG which concats the grouped MP4 into one .MP4. 
+1.   (Optional) Downconvert the merged file to a lower bitrate. 
 
