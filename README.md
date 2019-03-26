@@ -32,7 +32,7 @@ merge them based on their file number and creation dates.
 
 ## Files Included
 
-**``setup.py``** - optional script to run, it will install the pymediainfo library and FFMPEG (for Mac). 
+**``setup.py``** - optional script to run, it will install the pymediainfo library.
 
 **``gopro_main.py``** - the main python script to execute the concat and downconvert.
 
