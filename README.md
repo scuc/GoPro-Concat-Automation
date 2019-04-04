@@ -34,11 +34,11 @@ merge them based on their file number and creation dates.
 
 **``setup.py``** - optional script to run, it will install the pymediainfo library.
 
-**``gopro_main.py``** - the main python script to execute the concat and downconvert.
+**``gopro_main.py``** - execute for initialization of the script.
 
-**``gopro_concat.py``** - the module that handles the concatantion of the segmented GoPro files. 
+**``gopro_concat.py``** - the module that handles the concatantion and downconvert of the segmented GoPro files. 
 
-**``gopro_downconvert.py``** - the  module that handles the downconvert of the concatanated GoPro files. 
+**``get_mediainfo.py``** - the  module that uses pymediainfo to get all the metadata on the video files. 
 
 ## Getting Started
 
