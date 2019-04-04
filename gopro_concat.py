@@ -23,6 +23,8 @@ import subprocess
 import sys
 import time
 
+import get_mediainfo as mediainfo
+
 from datetime import datetime
 from pathlib import Path
 from operator import itemgetter
@@ -112,46 +114,6 @@ def get_gopro_list(source_path):
 
     print(gopr_dict)
     return gopr_dict
-
-def get_mediainfo(source_path, gprkey):
-    '''
-    Use pymediainfo lib to extract the MP4 file info.
-    Pass these values back to the concat and downcovert.
-    '''
-
-    gprkey_path = source_path + str(gprkey)
-
-    media_info = MediaInfo.parse(gprkey_path)
-
-    for track in media_info.tracks:
-        if track.track_type == 'Video':
-            bitrate = track.bit_rate
-            bitratemode = track.bit_rate_mode
-            codec = track.codec_ID
-            framerate = track.frame_rate
-            encoded_date = track.encoded_date
-            width = track.width
-            height = track.height
-        else:
-            pass
-
-    print("bitrate: " + str(bitrate))
-    print("bitrate mode: " + str(bitratemode))
-    print("codec: " + str(codec))
-    print("framerate: " + str(framerate))
-    print("encoded date: " + str(encoded_date))
-    print("width: " + str(width))
-    print("height: " + str(height))
-
-    return [
-            bitrate,
-            bitratemode,
-            codec,
-            framerate,
-            encoded_date,
-            width,
-            height
-            ]
 
 
 def create_datetime(encoded_date):
