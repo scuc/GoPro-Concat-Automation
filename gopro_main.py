@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-GoPro-Concat-Automation  v 0.1
+GoPro-Concat-Automation  v 0.2
 March 2019
 created by: steven cucolo stevenc.github@gmail.com
 
