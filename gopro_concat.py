@@ -2,9 +2,8 @@
 #!/usr/bin/env python3
 
 '''
-GoPro-Concat-Automation  v 0.1
+GoPro-Concat-Automation  v 0.2
 March 2019
-created by: steven cucolo stevenc.github@gmail.com
 
 Concat Steps:
     Make a list of all the files in a GoPro a directory.
@@ -39,7 +38,7 @@ def print_intro():
     '''
     open_msg = f"\n\
     ================================================================\n \
-                GoPro Automation Script, version 1.0 \n \
+                GoPro Automation Script, version 0.2 \n \
     This script will take a collection of chaptered GoPro video files \n \
     and stitch them together with the option to also downconvert them \n \
     to a 10Mbit file. \n \
@@ -157,7 +156,7 @@ def create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path, output_path):
 
         # print("GPR TXT PATH: " + str(gpr_txt_path))
 
-        gprfile_list = gopr_dict[gprkey]
+        gprfile_list = sorted(gopr_dict[gprkey])
 
         for file in gprfile_list:
             file_stmnt = "file " + '\'' + source_path + file + '\'' + "\n"
@@ -227,7 +226,7 @@ def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path):
     encoded_date = mediainfo['v_encoded_date']
     width = mediainfo['v_width']
     height = mediainfo['v_height']
-    a_format = mediainfo['a_format']
+    a_format = mediainfo['a_format'].lower()
     a_bitrate = mediainfo['a_bit_rate']
 
     video_siz = str(width) + 'x' + str(height)
