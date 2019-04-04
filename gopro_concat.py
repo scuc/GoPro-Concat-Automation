@@ -181,6 +181,8 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
 
     mediainfo = media.get_mediainfo(source_path, gprkey)
 
+    print("MEDIA INFO: " + str(mediainfo))
+
     encoded_date = mediainfo['v_encoded_date']
 
     gprkey_date = create_datetime(encoded_date)
@@ -218,13 +220,15 @@ def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path):
 
     mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path)
 
-    bitrate = mediainfo[0]
-    bitratemode = mediainfo[1]
-    codec = mediainfo[2]
-    framerate = mediainfo[3]
-    encoded_date = mediainfo[4]
-    width = mediainfo[5]
-    height = mediainfo[6]
+    bitrate = mediainfo['v_bit_rate']
+    bitratemode = mediainfo['v_bit_rate_mode']
+    codec = mediainfo['v_codec_id']
+    framerate = mediainfo['v_frame_rate']
+    encoded_date = mediainfo['v_encoded_date']
+    width = mediainfo['v_width']
+    height = mediainfo['v_height']
+    a_format = mediainfo['a_format']
+    a_bitrate = mediainfo['a_bit_rate']
 
     video_siz = str(width) + 'x' + str(height)
 
@@ -237,9 +241,9 @@ def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path):
     output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
     ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
-          '-map', '0:1', '-c:a', 'aac', '-ab', '128k',
+          '-map', '0:1', '-c:a', a_format, '-ab', '128k',
           '-strict', '-2', '-async', '1', '-c:v', 'libx264',
-          '-b:v', '10000k', '-maxrate', '10000k', '-bufsize',
+          '-b:v', '5000k', '-maxrate', '5000k', '-bufsize',
           '10000k', '-r', framerate, '-s', video_siz, '-aspect',
           '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
           '-level', '41', '-partitions',
