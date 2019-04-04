@@ -23,7 +23,7 @@ import subprocess
 import sys
 import time
 
-import get_mediainfo as mediainfo
+import get_mediainfo as media
 
 from datetime import datetime
 from pathlib import Path
@@ -179,9 +179,9 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
     gpr_txt_path = create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path,
         output_path)
 
-    mediainfo = get_mediainfo(source_path, gprkey)
+    mediainfo = media.get_mediainfo(source_path, gprkey)
 
-    encoded_date = mediainfo[4]
+    encoded_date = mediainfo['v_encoded_date']
 
     gprkey_date = create_datetime(encoded_date)
     creation_time = 'creation_time=' + encoded_date[4:]
