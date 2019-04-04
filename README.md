@@ -44,7 +44,7 @@ merge them based on their file number and creation dates.
 
 After the prerequisites are installed.
 
-1. cd to the working dir for the script and execute **``gopro_main.py``** from the terminal.
+1. cd to the working dir for the script and execute **`` python3 gopro_main.py``** from the terminal.
 
 2. The terminal will prompt for user input: 	
 	* 	Source Directory path
