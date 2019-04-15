@@ -31,51 +31,6 @@ from pymediainfo import MediaInfo
 from time import localtime, strftime
 
 
-def print_intro():
-    '''
-    Get the user input for starting values (Source, Output, Downcovert)
-    and begin the concat process.
-    '''
-    open_msg = f"\n\
-    ================================================================\n \
-                GoPro Automation Script, version 0.2 \n \
-    This script will take a collection of chaptered GoPro video files \n \
-    and stitch them together with the option to also downconvert them \n \
-    to a 10Mbit file. \n \
-    ================================================================\n"
-
-    print(open_msg)
-
-    source_path = str(input("Source path: "))
-
-    output_path = str(input("Output path: "))
-
-    down_convert = str(input("Downconvert the GoPro files [y/N]: "))
-
-    auto_rotate = str(input("Allow FFMPEG to auto rotate video? [Y/n]: "))
-
-    while True:
-        if down_convert[0].lower() == 'y':
-            down_convert = True
-            break
-        elif down_convert[0].lower() == 'n':
-            down_convert = False
-            break
-        else:
-            print(f"{down_convert} is not a valid choice.")
-            down_convert = str(input("Please select Yes or No (Y/N): "))
-            continue
-
-    while True:
-        if auto_rotate[0].lower() == 'y':
-            auto_rotate = True
-            break
-        elif auto_rotate[0].lower() == 'n':
-            auto_rotate = False
-            break
-
-    return [source_path, output_path, down_convert, auto_rotate]
-
 def get_gopro_list(source_path):
     '''
     Create a list of all the MP4 files in the given Source Dir.
