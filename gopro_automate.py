@@ -53,11 +53,12 @@ def get_gopro_list(source_path):
         else:
             continue
 
-    print("GoPRO SRC LIST: " + str(gopr_source_list))
+    print("GoPro SRC LIST: " + str(gopr_source_list))
 
     for file in gopr_source_list:
         print("FILE: " + file)
-        regex = r"(GOPR\d{4})\."
+        # regex = r"(GOPR\d{4})\."
+        regex = r"(G(OPR|X01)\d{4})\."
         gp = re.search(regex, file)
         # print(gp)
         if gp is not None:
@@ -69,14 +70,17 @@ def get_gopro_list(source_path):
 
     for file in gopr_key_list:
         filenum = file[4:]
-        fstring = f"(GP\\d{{2}}{filenum})"
+        fstring = f"((GP\\d{{2}}|GX0[2-9]){filenum})"
         r = re.compile(fstring)
         gplist = list(filter(r.match, gopr_source_list))
-        gplist.insert(0,file)
-        gopr_dict.update({file:gplist})
 
+        print("="*15)
+        print("GPLIST: " + str(gplist))
+        print("="*15)
 
-    print(gopr_dict)
+        gplist.insert(0, file)
+        gopr_dict.update({file: gplist})
+        print(gopr_dict)
     return gopr_dict
 
 
@@ -134,7 +138,7 @@ def create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path, output_path):
     return gpr_txt_path
 
 
-def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
+def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate):
     '''
     Use FFMPEG subprocess call to merge a set of MP4 files.
     '''
@@ -156,13 +160,18 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
 
     mp4_output = str(gprkey[:-4]) + '_' + gprkey_date[:-6] + '.MP4'
 
+    output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
+
     ffmpeg_cmd = [
-                  'ffmpeg', '-safe', '0', '-f', 'concat',  '-i',
+                  'ffmpeg', '-safe', '0', '-f', 'concat', '-noautorotate','-i',
                   gpr_txt_path, '-c', 'copy', '-metadata', creation_time,
                   mp4_output
                   ]
 
-    output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
+    if auto_rotate == True:
+        ffmpeg_cmd.remove('-noautorotate')
+    else:
+        pass
 
     sp = subprocess.Popen(ffmpeg_cmd,
                           shell=False,
@@ -176,13 +185,13 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
     return mp4_output, mediainfo, creation_time
 
 
-def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path):
+def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path, auto_rotate):
     '''
     Use a FFMPEG subprocess call to downconvert a merged MP4 file.
     '''
     os.chdir(output_path)
 
-    mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path)
+    mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate)
 
     bitrate = mediainfo['v_bit_rate']
     bitratemode = mediainfo['v_bit_rate_mode']
