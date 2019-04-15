@@ -32,6 +32,7 @@ def get_mediainfo(source_path, gprkey):
             media_dict.update(v_frame_rate_mode = track.frame_rate_mode)
             media_dict.update(v_width = track.width)
             media_dict.update(v_height = track.height)
+            media_dict.update(v_rotation = track.rotation)
             media_dict.update(v_display_aspect_ratio = track.display_aspect_ratio)
             media_dict.update(v_standard = track.standard)
             media_dict.update(v_color_space = track.color_space)
