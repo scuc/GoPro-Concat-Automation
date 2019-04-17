@@ -24,8 +24,7 @@ def print_intro():
     ================================================================\n \
                 GoPro Automation Script, version 0.2 \n \
     This script will take a collection of chaptered GoPro video files \n \
-    and stitch them together with the option to also downconvert them \n \
-    to a 10Mbit file. \n \
+    and stitch them together based on file name and creation date.  \n \
     ================================================================\n"
 
     print(open_msg)
@@ -34,42 +33,46 @@ def print_intro():
 
     output_path = str(input("Output path: "))
 
-    while True:
-        try:
-            down_convert = str(input("Downconvert the GoPro files [y/N]: "))
+    # while True:
+    #     try:
+    #         down_convert = str(input("Reduce the GoPro file size [y/N]: "))
 
-            if down_convert[0].lower() == 'y':
-                down_convert = True
-                break
-            elif down_convert[0].lower() == 'n':
-                down_convert = False
-                break
-            else:
-                print(f"{down_convert} is not a valid choice.")
-                down_convert = str(input("Please select Yes or No [y/N] "))
-                continue
-        except ValueError:
-            print("ValueError, try again")
-            continue
+    #         if down_convert[0].lower() == 'y':
+    #             down_convert = True
+    #             break
+    #         elif down_convert[0].lower() == 'n':
+    #             down_convert = False
+    #             break
+    #         else:
+    #             print(f"{down_convert} is not a valid choice.")
+    #             down_convert = str(input("Please select Yes or No [y/N] "))
+    #             continue
+    #     except ValueError:
+    #         print("ValueError, try again")
+    #         continue
 
-    while True:
-        try:
-            auto_rotate = str(input("Allow FFMPEG to auto-rotate video? [Y/n]: "))
-            if auto_rotate[0].lower() == 'y':
-                auto_rotate = True
-                break
-            elif auto_rotate[0].lower() == 'n':
-                auto_rotate = False
-                break
-            else:
-                print(f"{auto_rotate} is not a valid choice.")
-                continue
-        except ValueError:
-            print("ValueError, try again")
-            continue
+    #         if down_convert == True:
+    #             try:
+    #                 reduction_percentage = str(input("Reduce file size by what percentage? [10,20,30,40,50] "))
 
-    print([source_path, output_path, down_convert, auto_rotate])
-    return [source_path, output_path, down_convert, auto_rotate]
+    # while True:
+    #     try:
+    #         auto_rotate = str(input("Allow FFMPEG to auto-rotate video? [Y/n]: "))
+    #         if auto_rotate[0].lower() == 'y':
+    #             auto_rotate = True
+    #             break
+    #         elif auto_rotate[0].lower() == 'n':
+    #             auto_rotate = False
+    #             break
+    #         else:
+    #             print(f"{auto_rotate} is not a valid choice.")
+    #             continue
+    #     except ValueError:
+    #         print("ValueError, try again")
+    #         continue
+
+    print([source_path, output_path, auto_rotate])
+    return [source_path, output_path, auto_rotate]
 
 def gopro_main():
     '''
@@ -80,16 +83,14 @@ def gopro_main():
 
     source_path = gp_vars[0]
     output_path = gp_vars[1]
-    down_convert = gp_vars[2]
-    auto_rotate = gp_vars[3]
+    # down_convert = gp_vars[2]
+    # auto_rotate = gp_vars[3]
 
     start_message = f"\
     ================================================================\n \
         Starting the GoPro concat with these values : \n \
         Source Path:   {str(source_path)} \n \
         Output Path:   {str(output_path)} \n \
-        DownConvert:   {str(down_convert)} \n \
-        Auto Rotate:   {str(auto_rotate)} \n \
     ===========================================================\n "
 
     print(start_message)
@@ -97,18 +98,18 @@ def gopro_main():
     gopro_dict = gp.get_gopro_list(source_path)
     gprkey_list = list(gopro_dict.keys())
 
-    if down_convert == False:
+    # if down_convert == False:
 
-        for gprkey in gprkey_list:
-            gp.ffmpeg_concat(gprkey, gopro_dict, source_path, output_path, auto_rotate)
-            print('Processing concat now...')
+    for gprkey in gprkey_list:
+        gp.ffmpeg_concat(gprkey, gopro_dict, source_path, output_path, auto_rotate)
+        print('Processing concat now...')
 
-    else:
+    # else:
 
-        for gprkey in gprkey_list:
-            ffmpeg_downconvert = gp.ffmpeg_downconvert(gprkey, gopro_dict, source_path, output_path, auto_rotate)
+    #     for gprkey in gprkey_list:
+    #         ffmpeg_downconvert = gp.ffmpeg_downconvert(gprkey, gopro_dict, source_path, output_path, auto_rotate)
 
-        print("Processing downconvert now...")
+    #     print("Processing downconvert now...")
 
     print('FFMPEG process complete.')
 
