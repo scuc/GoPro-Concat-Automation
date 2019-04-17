@@ -137,8 +137,18 @@ def create_ffmpeg_txtfiles(gprkey, gopr_dict, source_path, output_path):
 
     return gpr_txt_path
 
+# def ffmpeg_rotate(mp4_output, creation_time):
 
-def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate):
+#     mp4_rotated_output =
+
+#     ffmpeg_cmd = [
+#                   'ffmpeg', '-vf','transpose=1,transpose=1','-i',
+#                   mp4_output, '-sameq', '-metadata', creation_time,
+#                   mp4_rotated_output
+#                   ]
+
+
+def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path):
     '''
     Use FFMPEG subprocess call to merge a set of MP4 files.
     '''
@@ -151,7 +161,13 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate):
 
     print("MEDIA INFO: " + str(mediainfo))
 
+    # if auto_rotate != True:
+    #     rotate = str(media_dict['v_rotation'])
+    # else:
+    #     rotate = 'rotate=0'
+
     encoded_date = mediainfo['v_encoded_date']
+    encoded_date_str = "encoded_date=" + str(mediainfo['v_encoded_date'])
 
     gprkey_date = create_datetime(encoded_date)
     creation_time = 'creation_time=' + encoded_date[4:]
@@ -163,15 +179,14 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate):
     output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
     ffmpeg_cmd = [
-                  'ffmpeg', '-safe', '0', '-f', 'concat', '-noautorotate','-i',
-                  gpr_txt_path, '-c', 'copy', '-metadata', creation_time,
+                  'ffmpeg', '-safe', '0', '-f', 'concat','-i',
+                  gpr_txt_path, '-c', 'copy', '-metadata', encoded_date,
                   mp4_output
                   ]
 
-    if auto_rotate == True:
-        ffmpeg_cmd.remove('-noautorotate')
-    else:
-        pass
+    print("="*20)
+    print("FFMPEG CONCAT CMD:  " + str(ffmpeg_cmd))
+    print("="*20)
 
     sp = subprocess.Popen(ffmpeg_cmd,
                           shell=False,
@@ -185,56 +200,56 @@ def ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate):
     return mp4_output, mediainfo, creation_time
 
 
-def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path, auto_rotate):
-    '''
-    Use a FFMPEG subprocess call to downconvert a merged MP4 file.
-    '''
-    os.chdir(output_path)
+# def ffmpeg_downconvert(gprkey, gopr_dict, source_path, output_path, auto_rotate):
+#     '''
+#     Use a FFMPEG subprocess call to downconvert a merged MP4 file.
+#     '''
+#     os.chdir(output_path)
 
-    mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate)
+#     mp4_output, mediainfo, creation_time = ffmpeg_concat(gprkey, gopr_dict, source_path, output_path, auto_rotate)
 
-    bitrate = mediainfo['v_bit_rate']
-    bitratemode = mediainfo['v_bit_rate_mode']
-    codec = mediainfo['v_codec_id']
-    framerate = mediainfo['v_frame_rate']
-    encoded_date = mediainfo['v_encoded_date']
-    width = mediainfo['v_width']
-    height = mediainfo['v_height']
-    a_format = mediainfo['a_format'].lower()
-    a_bitrate = mediainfo['a_bit_rate']
+#     bitrate = mediainfo['v_bit_rate']
+#     bitratemode = mediainfo['v_bit_rate_mode']
+#     codec = mediainfo['v_codec_id']
+#     framerate = mediainfo['v_frame_rate']
+#     encoded_date = mediainfo['v_encoded_date']
+#     width = mediainfo['v_width']
+#     height = mediainfo['v_height']
+#     a_format = mediainfo['a_format'].lower()
+#     a_bitrate = mediainfo['a_bit_rate']
 
-    video_siz = str(width) + 'x' + str(height)
+#     video_siz = str(width) + 'x' + str(height)
 
-    mp4_source = mp4_output
-    mp4_output = output_path + mp4_source[:-4] + "_downconvert.mp4"
+#     mp4_source = mp4_output
+#     mp4_output = output_path + mp4_source[:-4] + "_downconvert.mp4"
 
-    print("MP4 SOURCE:" + str(mp4_source))
-    print("MP4 OUTPUT:" + str(mp4_output))
+#     print("MP4 SOURCE:" + str(mp4_source))
+#     print("MP4 OUTPUT:" + str(mp4_output))
 
-    output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
+#     output_log = open(output_path + '/' + gprkey[:-4] + '_output.log', 'a')
 
-    ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
-          '-map', '0:1', '-c:a', a_format, '-ab', '128k',
-          '-strict', '-2', '-async', '1', '-c:v', 'libx264',
-          '-b:v', '5000k', '-maxrate', '5000k', '-bufsize',
-          '10000k', '-r', framerate, '-s', video_siz, '-aspect',
-          '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
-          '-level', '41', '-partitions',
-          'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
-          '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
-          '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
-          '1', '-me_method', 'hex', '-flags', '+loop',
-          '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
-          '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
-          '51', '-metadata', creation_time, '-sn', '-y', mp4_output]
+#     ffmpeg_cmd = ['ffmpeg', '-i', mp4_source, '-map', '0:0',
+#           '-map', '0:1', '-c:a', a_format, '-ab', '128k',
+#           '-strict', '-2', '-async', '1', '-c:v', 'libx264',
+#           '-b:v', '5000k', '-maxrate', '5000k', '-bufsize',
+#           '10000k', '-r', framerate, '-s', video_siz, '-aspect',
+#           '16:9', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
+#           '-level', '41', '-partitions',
+#           'partb8x8+partp4x4+partp8x8+parti8x8', '-b-pyramid',
+#           '2', '-weightb', '1', '-8x8dct', '1', '-fast-pskip',
+#           '1', '-direct-pred', '1', '-coder', 'ac', '-trellis',
+#           '1', '-me_method', 'hex', '-flags', '+loop',
+#           '-sws_flags', 'fast_bilinear', '-sc_threshold', '40',
+#           '-keyint_min', '60', '-g', '600', '-qmin', '3', '-qmax',
+#           '51', '-metadata', creation_time, '-sn', '-y', mp4_output]
 
-    sp = subprocess.Popen(ffmpeg_cmd, shell=False,
-                      stderr=output_log, stdout=output_log)
+#     sp = subprocess.Popen(ffmpeg_cmd, shell=False,
+#                       stderr=output_log, stdout=output_log)
 
-    (stderr, stdout) = sp.communicate(input='N')
+#     (stderr, stdout) = sp.communicate(input='N')
 
-    print(stderr, stdout)
+#     print(stderr, stdout)
 
-    output_log.close()
+#     output_log.close()
 
-    print("COMPLETE")
+#     print("COMPLETE")
