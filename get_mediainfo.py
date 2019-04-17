@@ -54,7 +54,6 @@ def get_mediainfo(source_path, gprkey):
             media_dict.update(a_sampling_rate = track.sampling_rate)
             media_dict.update(a_compression_mode = track.compression_mode)
 
-
     # print(media_dict)
 
     return media_dict
