@@ -3,7 +3,7 @@
 
 '''
 GoPro-Concat-Automation  v 0.2
-March 2019
+April 2019
 
 Concat Steps:
     Make a list of all the files in a GoPro a directory.
